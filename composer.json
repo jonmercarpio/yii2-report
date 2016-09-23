@@ -1,0 +1,22 @@
+{
+    "name": "jonmer09/yii2-report",
+    "description": "Yii2 Dashboard",
+    "type": "yii2-extension",
+    "keywords": ["yii2","extension"],
+    "license": "BSD-3-Clause",
+    "authors": [
+        {
+            "name": "Jonmer Carpio",
+            "email": "jonmer09@gmail.com"
+        }
+    ],
+    "require": {
+        "yiisoft/yii2": "*",
+        "fruppel/yii2-googlecharts" : "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "jonmer09\\report\\": ""
+        }
+    }
+}
