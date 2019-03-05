@@ -2,8 +2,12 @@
 
 namespace jonmer09\report\models;
 
-use Yii;
 use jonmer09\report\components\ReportHelper;
+use Yii;
+use yii\data\SqlDataProvider;
+use yii\db\ActiveQuery;
+use yii\db\ActiveRecord;
+use function GuzzleHttp\Psr7\hash;
 
 /**
  * Description of Report
@@ -19,25 +23,33 @@ use jonmer09\report\components\ReportHelper;
  * @property string $query_where
  * @property string $permissions
  * @property string $created_at
+ * @property array $gridColumnsName
+ * @property string $toggleDataKey
+ * @property string $gridID
+ * @property SqlDataProvider $provider
  *
  * @property ReportFilter[] $reportFilters
  */
-class Report extends \yii\db\ActiveRecord {
+class Report extends ActiveRecord
+{
 
     public $querySelectArray;
     public $queryFromArray;
+    public $headers;
 
     /**
      * @inheritdoc
      */
-    public static function tableName() {
+    public static function tableName()
+    {
         return '{{%report_report}}';
     }
 
     /**
      * @inheritdoc
      */
-    public function rules() {
+    public function rules()
+    {
         return [
             [['name', 'query_select', 'query_from'], 'required'],
             [['query_select', 'query_from', 'query_where'], 'string'],
@@ -49,7 +61,8 @@ class Report extends \yii\db\ActiveRecord {
     /**
      * @inheritdoc
      */
-    public function attributeLabels() {
+    public function attributeLabels()
+    {
         return [
             'id' => Yii::t('app', 'ID'),
             'name' => Yii::t('app', 'Name'),
@@ -61,20 +74,23 @@ class Report extends \yii\db\ActiveRecord {
     }
 
     /**
-     * @return \yii\db\ActiveQuery
+     * @return ActiveQuery
      */
-    public function getFilters() {
+    public function getFilters()
+    {
         return $this->hasMany(Filter::className(), ['report_id' => 'id']);
     }
 
-    public function beforeSave($insert) {
+    public function beforeSave($insert)
+    {
         $this->query_select = serialize(explode(',', $this->query_select));
         $this->query_from = serialize(explode(',', $this->query_from));
         $this->permissions = serialize($this->permissions);
         return parent::beforeSave($insert);
     }
 
-    public function afterFind() {
+    public function afterFind()
+    {
         $this->querySelectArray = unserialize($this->query_select);
         $this->queryFromArray = unserialize($this->query_from);
         $this->query_select = implode(',', $this->querySelectArray);
@@ -83,9 +99,11 @@ class Report extends \yii\db\ActiveRecord {
         return parent::afterFind();
     }
 
-    public function getQuery_Columns() {
+    public function getQuery_Columns()
+    {
         $columns = [];
-        foreach ($this->querySelectArray as $select) {
+        foreach ($this->querySelectArray as $select)
+        {
             $_s = explode(' ', $select);
             $columns[] = array_pop($_s);
         }
@@ -93,31 +111,62 @@ class Report extends \yii\db\ActiveRecord {
     }
 
     /**
-     * @return \yii\data\ArrayDataProvider
+     * @return SqlDataProvider
      */
-    public function getProvider() {
+    public function getProvider()
+    {
         return ReportHelper::getProvider($this);
     }
 
-    public function getGridFilters() {
+    public function getGridFilters()
+    {
         return ReportHelper::getGridFilters($this);
     }
 
-    public function getQueryWhereArray() {
-        $whereArray = [];
+    public function getGridColumns()
+    {
+        return (ReportHelper::getGridcolumns($this));
+    }
+
+    public function getQueryWhereArray()
+    {
         $preg = preg_split("/[\[\]]/", $this->query_where, 0, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
-        foreach ($preg as $p) {
-            if (preg_match_all('/{+(.*?)}/i', $p, $matches)) {
-                $whereArray[$matches[1][0]] = $p;
-            } else {
-                $whereArray[] = $p;
-            }
-        }
         return $preg;
     }
 
-    public function getQueryWhereString() {
+    public function getQueryWhereString()
+    {
         return implode(' ', $this->queryWhereArray);
+    }
+
+    public function getGridColumnsName()
+    {
+        if ($this->headers)
+        {
+            return $this->headers;
+        }
+        $this->headers = ReportHelper::getColumnsName($this);
+        return $this->headers;
+    }
+
+    public function getIsValid()
+    {
+        return ReportHelper::getIsValid($this);
+    }
+
+    public function getGridID()
+    {
+        return "y2rt_{$this->id}";
+    }
+
+    public function getToggleDataKey()
+    {
+        return '_tog' . hash('crc32', $this->gridID);
+    }
+
+    public function getPjaxContainerId()
+    {
+        return ReportHelper::getPjaxContainerId();
     }
 
 }

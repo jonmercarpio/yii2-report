@@ -33,9 +33,9 @@ $this->params['breadcrumbs'][] = $this->title;
         'columns' => [
             'id',
             'name',
-            'query_select',
-            'query_from',
-            'query_where',
+            'query_select:truncate',
+            'query_from:truncate',
+            'query_where:truncate',
             [
                 'class' => yii\grid\ActionColumn::className(),
             ]
